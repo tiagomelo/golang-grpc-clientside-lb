@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package hello;
+
+option go_package = "github.com/tiagomelo/golang-grpc-clientside-lb/api/proto/gen/helloservice";
+
+// Greeter is a service that provides greetings.
+service Greeter {
+    // SayHello produces a greeting for the given name.
+    rpc SayHello (HelloRequest) returns (HelloResponse);
+}
+
+// HelloRequest represents a request to produce a greeting for a specific name.
+message HelloRequest {
+    string name = 1;
+}
+
+// HelloResponse contains the greeting message produced by the Greeter service.
+message HelloResponse {
+    // Greeting message.
+    string message = 1;
+}

@@ -1,0 +1,8 @@
+.:53 {
+    hosts {
+        127.0.0.2 hello-grpc-service.tiago.local
+        127.0.0.3 hello-grpc-service.tiago.local
+    }
+    errors
+    log
+}
