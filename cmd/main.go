@@ -21,7 +21,6 @@ func run(logger *log.Logger, serverHost string, serverPort int) error {
 
 	// Setting up a TCP listener on the specified port.
 	port := fmt.Sprintf("%s:%d", serverHost, serverPort)
-	fmt.Printf("port: %v\n", port)
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		return errors.Wrap(err, "tcp listening")
