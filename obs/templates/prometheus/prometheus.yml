@@ -1,0 +1,9 @@
+scrape_configs:
+  - job_name: 'server_one'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['{{.IP}}:{{.ServerOnePort}}']
+  - job_name: 'server_two'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['{{.IP}}:{{.ServerTwoPort}}']

@@ -35,7 +35,7 @@ func sayHello(c helloservice.GreeterClient, name string) (string, error) {
 // makeRPCs sends a series of RPC calls to the server and prints the response.
 func makeRPCs(logger *log.Logger, cc *grpc.ClientConn, n int) error {
 	client := helloservice.NewGreeterClient(cc)
-	for i := 0; i < n; i++ {
+	for {
 		message, err := sayHello(client, "Tiago")
 		if err != nil {
 			return errors.Wrap(err, "calling SayHello")
@@ -43,7 +43,6 @@ func makeRPCs(logger *log.Logger, cc *grpc.ClientConn, n int) error {
 		fmt.Println(message)
 		time.Sleep(1 * time.Second)
 	}
-	return nil
 }
 
 // run sets up the gRPC client, establishes a connection to the server, and initiates RPC calls.
@@ -63,7 +62,7 @@ func run(logger *log.Logger, loadBalancingPolicy string) error {
 		return errors.Wrap(err, "dialing")
 	}
 	defer roundrobinConn.Close()
-	return makeRPCs(logger, roundrobinConn, 10)
+	return makeRPCs(logger, roundrobinConn, 100)
 }
 
 // options struct holds command line flags configurations.

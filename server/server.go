@@ -10,10 +10,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/tiagomelo/golang-grpc-clientside-lb/api/proto/gen/helloservice"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+// servedRequestCounter is a Prometheus metric to keep track of the number
+// of gRPC requests served.
+var servedRequestCounter = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "served_request_total",
+	Help: "The total number of gRPC requests served by this server",
+})
 
 // server struct encapsulates the gRPC server functionalities and
 // implements the GreeterServer interface from the proto definition.
@@ -38,5 +47,6 @@ func New(host string) *server {
 // SayHello is an RPC method implementation that responds with a greeting message,
 // including the server's host identifier.
 func (s *server) SayHello(ctx context.Context, in *helloservice.HelloRequest) (*helloservice.HelloResponse, error) {
+	servedRequestCounter.Inc()
 	return &helloservice.HelloResponse{Message: fmt.Sprintf("Hello, %s (from server %s)", in.Name, s.host)}, nil
 }

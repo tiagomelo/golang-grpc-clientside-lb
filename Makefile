@@ -54,7 +54,40 @@ build-coredns-img:
 .PHONY: coredns
 ## coredns: runs CoreDNS
 coredns: build-coredns-img
-	@ docker run -p 53:53/udp --rm grpc-coredns
+	@ docker run --name grpc-coredns -p 53:53/udp --rm grpc-coredns
+
+# ==============================================================================
+# socat TCP proxy
+
+.PHONY: socat-server-one
+## socat-server-one: starts socat TCP proxy for server 1
+socat-server-one:
+	@ socat TCP-LISTEN:$(PROM_TARGET_GRPC_SERVER_ONE_PORT),fork TCP:$(LOOPBACK_ADDRESS_1):$(SOCAT_GRPC_SERVER_ONE_PORT)
+	@ echo "socat is running for server 1... hit control + c to stop it."
+
+.PHONY: socat-server-two
+## socat-server-two: starts socat TCP proxy for server 2
+socat-server-two:
+	@ socat TCP-LISTEN:$(PROM_TARGET_GRPC_SERVER_TWO_PORT),fork TCP:$(LOOPBACK_ADDRESS_2):$(SOCAT_GRPC_SERVER_TWO_PORT)
+	@ echo "socat is running for server 2... hit control + c to stop it."
+
+# ==============================================================================
+# Metrics
+
+.PHONY: parse-templates
+## parse-templates: parses Prometheus scrapes and datasource templates
+parse-templates:
+	@ go run templateparser/templateparser.go
+
+.PHONY: obs
+## obs: runs both prometheus and grafana
+obs: parse-templates
+	@ docker-compose up
+
+.PHONY: obs-stop
+## obs-stop: stops both prometheus and grafana
+obs-stop:
+	@ docker-compose down -v
 
 # ==============================================================================
 # gRPC server execution
@@ -64,7 +97,8 @@ coredns: build-coredns-img
 server:
 	@ if [ -z "$(SERVER_HOST)" ]; then echo >&2 please set the server host via the variable SERVER_HOST; exit 2; fi
 	@ if [ -z "$(SERVER_PORT)" ]; then echo >&2 please set the server port via the variable SERVER_PORT; exit 2; fi
-	@ go run cmd/main.go -s $(SERVER_HOST) -p $(SERVER_PORT)
+	@ if [ -z "$(METRICS_SERVER_PORT)" ]; then echo >&2 please set the metrics server port via the variable METRICS_SERVER_PORT; exit 2; fi
+	@ go run cmd/main.go -s $(SERVER_HOST) -p $(SERVER_PORT) -x $(METRICS_SERVER_PORT)
 
 # ==============================================================================
 # gRPC client execution

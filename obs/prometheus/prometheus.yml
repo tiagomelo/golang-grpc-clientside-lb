@@ -1,0 +1,9 @@
+scrape_configs:
+  - job_name: 'server_one'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:50052']
+  - job_name: 'server_two'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:50053']
