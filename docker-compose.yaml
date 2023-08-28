@@ -39,6 +39,7 @@ services:
 
 networks:
   monitoring_network:
+    driver: bridge
 
 volumes:
   grafana_data:

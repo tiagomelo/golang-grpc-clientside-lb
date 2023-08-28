@@ -81,7 +81,7 @@ parse-templates:
 
 .PHONY: obs
 ## obs: runs both prometheus and grafana
-obs: parse-templates
+obs: # parse-templates
 	@ docker-compose up
 
 .PHONY: obs-stop

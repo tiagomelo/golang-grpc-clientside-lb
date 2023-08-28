@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"text/template"
 
@@ -16,23 +15,14 @@ import (
 	"github.com/tiagomelo/golang-grpc-clientside-lb/config"
 )
 
+const dockerInternalHost = "host.docker.internal"
+
 // data is a struct that holds the information used to fill the templates.
 type data struct {
 	IP            string
 	ServerOnePort int
 	ServerTwoPort int
-	Port          int
-}
-
-// getOutboundIpAddr returns the outbound IP address of the current machine.
-func getOutboundIpAddr() (string, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		return "", err
-	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP.String(), nil
+	DsServerPort  int
 }
 
 // parseTemplate takes in a data object, a template file, and an output file.
@@ -56,9 +46,8 @@ func parseTemplate(data *data, templateFile, outputFile string) error {
 // parsePrometheusScrapeTemplate is a specialized function to generate Prometheus scrape configurations.
 // It sets up data based on provided parameters and then uses the general template parsing function.
 func parsePrometheusScrapeTemplate(serverOnePort, serverTwoPort int, templateFile, outputFile string) error {
-	const ip = "host.docker.internal"
 	data := &data{
-		IP:            ip,
+		IP:            dockerInternalHost,
 		ServerOnePort: serverOnePort,
 		ServerTwoPort: serverTwoPort,
 	}
@@ -67,10 +56,10 @@ func parsePrometheusScrapeTemplate(serverOnePort, serverTwoPort int, templateFil
 
 // parsePrometheusDataSourceTemplate is another specialized function to generate Prometheus datasource configurations.
 // It sets up data based on provided parameters and then uses the general template parsing function.
-func parsePrometheusDataSourceTemplate(ip string, serverPort int, templateFile, outputFile string) error {
+func parsePrometheusDataSourceTemplate(serverPort int, templateFile, outputFile string) error {
 	data := &data{
-		IP:   ip,
-		Port: serverPort,
+		IP:           dockerInternalHost,
+		DsServerPort: serverPort,
 	}
 	return parseTemplate(data, templateFile, outputFile)
 }
@@ -80,15 +69,11 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "reading config")
 	}
-	ip, err := getOutboundIpAddr()
-	if err != nil {
-		return errors.Wrap(err, "getting ip")
-	}
 	if err := parsePrometheusScrapeTemplate(cfg.PromTargetGrpcServerOnePort,
 		cfg.PromTargetGrpcServerTwoPort, cfg.PromTemplateFile, cfg.PromOutputFile); err != nil {
 		return errors.Wrap(err, "parsing Prometheus scrape template")
 	}
-	if err := parsePrometheusDataSourceTemplate(ip, cfg.DsServerPort, cfg.DsTemplateFile, cfg.DsOutputFile); err != nil {
+	if err := parsePrometheusDataSourceTemplate(cfg.DsServerPort, cfg.DsTemplateFile, cfg.DsOutputFile); err != nil {
 		return errors.Wrap(err, "parsing Prometheus datasource template")
 	}
 	return nil

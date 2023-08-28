@@ -3,6 +3,6 @@ apiVersion: 1
 datasources:
 - name: Prometheus
   type: prometheus
-  url: http://{{.IP}}:{{.Port}}
+  url: http://{{.IP}}:{{.DsServerPort}}
   access: proxy
   isDefault: true

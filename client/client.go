@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jessevdk/go-flags"
@@ -33,7 +35,7 @@ func sayHello(c helloservice.GreeterClient, name string) (string, error) {
 }
 
 // makeRPCs sends a series of RPC calls to the server and prints the response.
-func makeRPCs(logger *log.Logger, cc *grpc.ClientConn, n int) error {
+func makeRPCs(logger *log.Logger, cc *grpc.ClientConn) error {
 	client := helloservice.NewGreeterClient(cc)
 	for {
 		message, err := sayHello(client, "Tiago")
@@ -62,7 +64,28 @@ func run(logger *log.Logger, loadBalancingPolicy string) error {
 		return errors.Wrap(err, "dialing")
 	}
 	defer roundrobinConn.Close()
-	return makeRPCs(logger, roundrobinConn, 100)
+
+	// Make a channel to listen for an interrupt or terminate signal from the OS.
+	// Use a buffered channel because the signal package requires it.
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Make a channel to listen for errors coming from the listener. Use a
+	// buffered channel so the goroutine can exit if we don't collect this error.
+	serverErrors := make(chan error, 1)
+
+	// Send requests.
+	go func() {
+		serverErrors <- makeRPCs(logger, roundrobinConn)
+	}()
+	select {
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+	case sig := <-shutdown:
+		logger.Println("main: received signal for shutdown: ", sig)
+	}
+
+	return nil
 }
 
 // options struct holds command line flags configurations.
