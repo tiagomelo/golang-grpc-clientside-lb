@@ -63,13 +63,11 @@ coredns: build-coredns-img
 ## socat-server-one: starts socat TCP proxy for server 1
 socat-server-one:
 	@ socat TCP-LISTEN:$(PROM_TARGET_GRPC_SERVER_ONE_PORT),fork TCP:$(LOOPBACK_ADDRESS_1):$(SOCAT_GRPC_SERVER_ONE_PORT)
-	@ echo "socat is running for server 1... hit control + c to stop it."
 
 .PHONY: socat-server-two
 ## socat-server-two: starts socat TCP proxy for server 2
 socat-server-two:
 	@ socat TCP-LISTEN:$(PROM_TARGET_GRPC_SERVER_TWO_PORT),fork TCP:$(LOOPBACK_ADDRESS_2):$(SOCAT_GRPC_SERVER_TWO_PORT)
-	@ echo "socat is running for server 2... hit control + c to stop it."
 
 # ==============================================================================
 # Metrics
